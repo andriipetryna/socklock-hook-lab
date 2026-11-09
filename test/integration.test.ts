@@ -30,19 +30,37 @@ beforeAll(async () => {
     req.on('end', () => {
       const body = JSON.parse(raw);
       captured.push({ path: req.url ?? '', headers: req.headers, body });
-      res.setHeader('content-type', 'application/json');
-      res.end(
-        JSON.stringify({
-          id: 'msg_test',
-          type: 'message',
-          role: 'assistant',
-          model: body.model,
-          content: [{ type: 'text', text: JSON.stringify(sampleGeneration) }],
-          stop_reason: 'end_turn',
-          stop_sequence: null,
-          usage: { input_tokens: 4000, output_tokens: 2000 },
-        }),
-      );
+      // system 'truncate' simulates hitting max_tokens mid-string, like a real long answer.
+      const truncate = body.system === 'truncate';
+      const full = JSON.stringify(sampleGeneration);
+      const text = truncate ? full.slice(0, full.length / 2) : full;
+      const stopReason = truncate ? 'max_tokens' : 'end_turn';
+      const message = {
+        id: 'msg_test',
+        type: 'message',
+        role: 'assistant',
+        model: body.model,
+        content: [{ type: 'text', text }],
+        stop_reason: stopReason,
+        stop_sequence: null,
+        usage: { input_tokens: 4000, output_tokens: 2000 },
+      };
+      if (!body.stream) {
+        res.setHeader('content-type', 'application/json');
+        res.end(JSON.stringify(message));
+        return;
+      }
+      // Server-sent events, as the Messages API streams them.
+      const events = [
+        { type: 'message_start', message: { ...message, content: [], stop_reason: null, usage: { input_tokens: 4000, output_tokens: 0 } } },
+        { type: 'content_block_start', index: 0, content_block: { type: 'text', text: '' } },
+        { type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text } },
+        { type: 'content_block_stop', index: 0 },
+        { type: 'message_delta', delta: { stop_reason: stopReason, stop_sequence: null }, usage: { output_tokens: 2000 } },
+        { type: 'message_stop' },
+      ];
+      res.setHeader('content-type', 'text/event-stream');
+      res.end(events.map((e) => `event: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`).join(''));
     });
   });
   await new Promise<void>((r) => stub.listen(0, '127.0.0.1', r));
@@ -75,6 +93,11 @@ describe('SDK wiring', () => {
     expect(call.headers['api-key'] ?? call.headers['x-api-key']).toBe('az-test');
     expect(call.body.model).toBe('my-sonnet-deployment');
     expect(res.output.winner_analysis.original_hook).toBe(sampleGeneration.winner_analysis.original_hook);
+  });
+
+  it('reports a truncated answer as max_tokens, not as a JSON parse error', async () => {
+    const cfg = readConfig({ LLM_PROVIDER: 'anthropic', ANTHROPIC_API_KEY: 'sk-test', ANTHROPIC_BASE_URL: stubUrl });
+    await expect(createLlmClient(cfg).generate({ ...req, system: 'truncate' })).rejects.toThrow(/max_tokens/);
   });
 
   it('explains what is missing in the config', () => {

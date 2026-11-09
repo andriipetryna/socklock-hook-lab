@@ -52,8 +52,10 @@ export async function generateVariants(input: GenerateInput, deps: GenerateDeps)
 
   const system = buildSystemPrompt(deps.brandFacts, deps.rules.limits);
   const user = buildUserPrompt({ script, plan, ctaCount, avoid: avoidList(deps.library) });
-  // ~150 output tokens per variant + room for the analysis and CTAs.
-  const maxTokens = Math.min(16_000, 1_500 + count * 200 + ctaCount * 80);
+  // A ceiling, not a target: you pay only for tokens actually produced. It must also cover the
+  // model's thinking (on by default for current models), and Ukrainian copy takes more tokens per
+  // character than English, so a tight per-variant estimate truncates the JSON mid-string.
+  const maxTokens = 64_000;
 
   const started = Date.now();
   const res = await deps.llm.generate({ system, user, maxTokens });
