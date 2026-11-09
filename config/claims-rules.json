@@ -1,0 +1,65 @@
+{
+  "limits": {
+    "firstLineMaxWords": 12,
+    "onScreenMaxChars": 40,
+    "hookVisualMaxWords": 25,
+    "ctaSpokenMaxWords": 14,
+    "ctaOnScreenMaxChars": 30
+  },
+  "similarity": {
+    "duplicate": 0.62,
+    "similar": 0.45
+  },
+  "allowedNumbers": ["5", "29", "3", "6"],
+  "rules": [
+    {
+      "id": "health",
+      "severity": "high",
+      "label": "Твердження про здоров’я",
+      "pattern": "\\b(circulation|blood flow|pain|relief|therap\\w*|heal\\w*|cure\\w*|arthritis|neuropath\\w*|wellness|energy|detox|ion\\w*|magnetic therapy)\\b",
+      "hint": "Терапевтичні обіцянки про магніти заборонені правилами Meta і нічим не підтверджені."
+    },
+    {
+      "id": "safety",
+      "severity": "medium",
+      "label": "Твердження про безпеку",
+      "pattern": "\\b(safe|harmless|non-toxic)\\b",
+      "hint": "Безпеку треба довести (магніти й кардіостимулятори). Приберіть або погодьте з юристом."
+    },
+    {
+      "id": "absolute",
+      "severity": "medium",
+      "label": "Абсолютна обіцянка",
+      "pattern": "\\b(never|forever|guarantee\\w*|100\\s?%|always|no more|zero lost|every single time)\\b",
+      "hint": "Абсолютні обіцянки ризиковані (FTC, Meta). М’якше: «stay together in the wash»."
+    },
+    {
+      "id": "superlative",
+      "severity": "medium",
+      "label": "Суперлатив",
+      "pattern": "(#\\s?1\\b|\\bnumber one\\b|\\bbest\\b|\\bworld'?s first\\b|\\bonly socks?\\b|\\brevolutionary\\b|\\bmost popular\\b)",
+      "hint": "«Найкращий» потребує доказу. Краще конкретика."
+    },
+    {
+      "id": "urgency",
+      "severity": "medium",
+      "label": "Вигадана терміновість",
+      "pattern": "\\b(today only|last chance|limited time|hurry|selling out|sold out|only \\d+ left|ends tonight)\\b",
+      "hint": "В оферті немає дедлайну, не вигадуйте його."
+    },
+    {
+      "id": "offer",
+      "severity": "high",
+      "label": "Умови поза офертою",
+      "pattern": "\\b(free|discount|% off|off your|cancel anytime|money.back|trial)\\b",
+      "hint": "Дозволено лише «5 pairs for $29, then a new delivery every quarter»."
+    },
+    {
+      "id": "proof",
+      "severity": "medium",
+      "label": "Непідтверджений соцдоказ",
+      "pattern": "\\b(customers|reviews?|rated|stars?|families|people love|thousands|millions|award\\w*|viral)\\b",
+      "hint": "Соцдоказ має бути справжнім. Поставте [PLACEHOLDER] і заповніть реальними даними."
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+Title: Product demo "The click" — winner, US
+Format: 4:5, 18s, studio product shots + voice-over
+
+[0-2s] HOOK
+Visual: extreme close-up — two sock cuffs snap together with a satisfying click (sound up).
+VO: "Hear that? That's the sound of a sock that won't go missing."
+On-screen: "*click*"
+
+[2-9s] HOW IT WORKS
+Visual: slow motion — magnet inside the cuff, the pair goes into the drum together.
+VO: "SockLock socks have a tiny magnet in the cuff, so pairs stay together in the washer and the dryer."
+On-screen: "Tiny magnet in the cuff"
+
+[9-14s] RESULT
+Visual: a neat drawer of matched pairs.
+VO: "No more sorting. Just grab a pair."
+
+[14-18s] CTA
+VO: "Take the quiz to build your first box: 5 pairs for $29."
+On-screen: "Take the quiz →"

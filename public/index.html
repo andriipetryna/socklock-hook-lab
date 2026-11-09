@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SockLock Hook Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,400;0,500;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg class="magnet" viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M6 4h6v12a4 4 0 0 0 8 0V4h6v12a10 10 0 0 1-20 0z" fill="var(--magnet)"/>
+        <path d="M6 4h6v5H6zM20 4h6v5h-6z" fill="var(--tip)"/>
+      </svg>
+      <h1>Hook Lab</h1>
+      <span class="brand-sub">модифікації переможців SockLock</span>
+    </div>
+    <p class="runtime" id="runtime">Підключаюся…</p>
+  </header>
+
+  <div class="banner" id="banner" hidden></div>
+
+  <main class="layout">
+    <form class="input-pane" id="form" autocomplete="off">
+      <div class="field">
+        <div class="field-head">
+          <label for="script">Скрипт переможця</label>
+          <select id="examples" aria-label="Підставити приклад">
+            <option value="">Приклад…</option>
+          </select>
+        </div>
+        <textarea id="script" rows="16" spellcheck="false" placeholder="Вставте скрипт: хук, озвучку, текст на екрані, сцени, CTA. Формат довільний."></textarea>
+      </div>
+
+      <fieldset class="field">
+        <legend>Кути</legend>
+        <div class="chips" id="angles"></div>
+      </fieldset>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="count">Хуків</label>
+          <input id="count" type="number" min="1" max="40" value="20">
+        </div>
+        <div class="field">
+          <label for="ctaCount">CTA</label>
+          <input id="ctaCount" type="number" min="0" max="10" value="4">
+        </div>
+      </div>
+
+      <button class="primary" id="generate" type="submit">Згенерувати варіанти</button>
+      <p class="hint" id="progress" aria-live="polite"></p>
+    </form>
+
+    <section class="results-pane" aria-label="Результати">
+      <div class="empty" id="empty">
+        <h2>Нові перші три секунди для ролика, який уже працює</h2>
+        <p>Вставте скрипт переможця ліворуч. Інструмент запропонує хуки під різні кути, перевірить їх на ризикові твердження й повтори з бібліотеки, а ви оберете, поправите і віддасте бриф у продакшн.</p>
+      </div>
+
+      <div id="results" hidden>
+        <div class="seam" id="seam" aria-label="Як новий хук переходить у тіло ролика">
+          <div class="seam-new">
+            <span class="seam-label">Новий початок, 0–3 с</span>
+            <p id="seamNew">Наведіть на рядок, щоб прочитати його разом із тілом ролика</p>
+          </div>
+          <svg class="seam-magnet" viewBox="0 0 32 32" aria-hidden="true">
+            <path d="M4 6v6h12a4 4 0 0 1 0 8H4v6h12a10 10 0 0 0 0-20z" fill="var(--magnet)"/>
+            <path d="M4 6h5v6H4zM4 20h5v6H4z" fill="var(--tip)"/>
+          </svg>
+          <div class="seam-body">
+            <span class="seam-label">Тіло без змін</span>
+            <p id="seamBody"></p>
+          </div>
+        </div>
+
+        <details class="analysis">
+          <summary>Як модель прочитала переможця</summary>
+          <dl id="analysis"></dl>
+        </details>
+
+        <div class="toolbar">
+          <dl class="stats" id="stats"></dl>
+          <div class="filters" role="group" aria-label="Фільтр">
+            <button type="button" data-filter="all" aria-pressed="true">Усі</button>
+            <button type="button" data-filter="ok" aria-pressed="false">Готові</button>
+            <button type="button" data-filter="review" aria-pressed="false">Перевірити</button>
+            <button type="button" data-filter="duplicate" aria-pressed="false">Дублі</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="variants">
+            <thead>
+              <tr>
+                <th class="col-pick"><input type="checkbox" id="pickAll" aria-label="Обрати всі видимі"></th>
+                <th class="col-angle">Кут</th>
+                <th class="col-visual">Перший кадр</th>
+                <th class="col-line">Перша фраза</th>
+                <th class="col-screen">Текст на екрані</th>
+                <th class="col-check">Перевірка</th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+
+        <section class="ctas" id="ctaSection">
+          <h3>Варіанти CTA</h3>
+          <ul id="ctas"></ul>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <footer class="actionbar" id="actionbar" hidden>
+    <p id="selection">Нічого не обрано</p>
+    <div class="actions">
+      <button type="button" id="saveLibrary" disabled>Додати в бібліотеку</button>
+      <button type="button" id="exportMd" disabled>Завантажити бриф</button>
+      <button type="button" class="primary" id="exportCsv" disabled>Експорт CSV</button>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+  <script src="app.js" type="module"></script>
+</body>
+</html>
