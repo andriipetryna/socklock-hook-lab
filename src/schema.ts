@@ -61,6 +61,8 @@ export interface Flag {
   field: CopyField;
   match: string;
   hint: string;
+  /** Only on length flags: the raw numbers, so the UI can format them in its own language. */
+  limit?: { actual: number; max: number; unit: 'words' | 'chars' };
 }
 
 export interface SimilarityHit {

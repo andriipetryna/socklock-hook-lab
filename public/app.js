@@ -1,5 +1,7 @@
 // SockLock Hook Lab — browser side. No build step: plain ES module talking to the local server.
 
+import { applyStatic, getLang, has, setLang, t, tn, tNodes } from './i18n.js';
+
 const $ = (id) => document.getElementById(id);
 
 const state = {
@@ -10,9 +12,9 @@ const state = {
   /** id → { ...variant, selected, edited, checked } */
   rows: new Map(),
   ctas: new Map(),
+  /** Message shown in the topbar when /api/meta could not be reached. */
+  offline: null,
 };
-
-const SOURCE_LABEL = { library: 'хук з бібліотеки', batch: 'інший варіант у цій видачі', winner: 'оригінальний хук переможця' };
 
 /* ---------- helpers ---------- */
 
@@ -30,14 +32,7 @@ function h(tag, attrs = {}, ...children) {
   return el;
 }
 
-function plural(n, one, few, many) {
-  const m10 = n % 10;
-  const m100 = n % 100;
-  if (m10 === 1 && m100 !== 11) return one;
-  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
-  return many;
-}
-const hooksWord = (n) => `${n} ${plural(n, 'хук', 'хуки', 'хуків')}`;
+const hooksWord = (n) => tn('hooks', n);
 
 const graphemes = new Intl.Segmenter('en', { granularity: 'grapheme' });
 const countChars = (s) => [...graphemes.segment(s)].length;
@@ -50,7 +45,7 @@ async function api(path, body) {
     body: JSON.stringify(body),
   });
   if (!res.ok) {
-    let message = `Помилка ${res.status}`;
+    let message = t('error.http', { status: res.status });
     try { message = (await res.json()).error ?? message; } catch {}
     throw new Error(message);
   }
@@ -80,30 +75,43 @@ async function init() {
     $('count').value = meta.defaults.count;
     $('ctaCount').value = meta.defaults.ctaCount;
     for (const ex of examples) $('examples').append(h('option', { value: ex.script, text: ex.title }));
-    if (!meta.ready) {
-      $('banner').textContent = `Генерація вимкнена: ${meta.problem} Після зміни .env перезапустіть сервер.`;
-      $('banner').hidden = false;
-      $('generate').disabled = true;
-    }
+    renderBanner();
+    if (!meta.ready) $('generate').disabled = true;
   } catch (e) {
-    $('runtime').textContent = `Сервер недоступний: ${e.message}`;
+    state.offline = e.message;
+    renderRuntime();
   }
+}
+
+function renderBanner() {
+  const m = state.meta;
+  if (!m || m.ready) return;
+  $('banner').textContent = t('banner.disabled', { problem: m.problem });
+  $('banner').hidden = false;
 }
 
 function renderRuntime() {
   const m = state.meta;
-  $('runtime').replaceChildren(
-    'Провайдер ', h('strong', { text: m.provider }), ', модель ', h('strong', { text: m.model }),
-    '. У бібліотеці ', h('strong', { text: hooksWord(m.librarySize) }), '.',
-  );
+  if (!m) {
+    $('runtime').textContent = state.offline ? t('runtime.offline', { message: state.offline }) : t('runtime.connecting');
+    return;
+  }
+  $('runtime').replaceChildren(...tNodes('runtime.info', {
+    provider: h('strong', { text: m.provider }),
+    model: h('strong', { text: m.model }),
+    library: h('strong', { text: hooksWord(m.librarySize) }),
+  }));
 }
 
+/** Rebuilds the angle chips; keeps the current ticks when called again after a language switch. */
 function renderAngles(meta) {
+  const current = document.querySelectorAll('input[name=angle]');
+  const checked = current.length ? new Set([...current].filter((i) => i.checked).map((i) => i.value)) : new Set(meta.defaults.angles);
   $('angles').replaceChildren(
     ...meta.angles.map((a) =>
       h('label', { class: 'chip', title: a.brief },
-        h('input', { type: 'checkbox', name: 'angle', value: a.id, checked: meta.defaults.angles.includes(a.id) }),
-        h('span', { text: a.label })),
+        h('input', { type: 'checkbox', name: 'angle', value: a.id, checked: checked.has(a.id) }),
+        h('span', { text: angleLabel(a.id) })),
     ),
   );
 }
@@ -118,7 +126,7 @@ $('examples').addEventListener('change', (e) => {
 $('form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const angles = [...document.querySelectorAll('input[name=angle]:checked')].map((i) => i.value);
-  if (!angles.length) return toast('Оберіть хоча б один кут.');
+  if (!angles.length) return toast(t('form.pickAngle'));
   const body = {
     script: $('script').value,
     count: Number($('count').value),
@@ -129,7 +137,7 @@ $('form').addEventListener('submit', async (e) => {
   const btn = $('generate');
   btn.disabled = true;
   const started = Date.now();
-  const tick = () => ($('progress').textContent = `Генерую ${hooksWord(body.count)}… ${Math.round((Date.now() - started) / 1000)} с`);
+  const tick = () => ($('progress').textContent = t('form.progress', { hooks: hooksWord(body.count), seconds: Math.round((Date.now() - started) / 1000) }));
   tick();
   const timer = setInterval(tick, 1000);
 
@@ -167,17 +175,17 @@ function renderResults() {
 
   $('analysis').replaceChildren(
     ...[
-      ['Оригінальний хук', r.analysis.original_hook],
-      ['Головна обіцянка', r.analysis.core_promise],
-      ['Тіло починається з', r.analysis.body_starts_with],
-      ['Не змінюємо', r.analysis.keep_unchanged],
+      [t('analysis.originalHook'), r.analysis.original_hook],
+      [t('analysis.corePromise'), r.analysis.core_promise],
+      [t('analysis.bodyStarts'), r.analysis.body_starts_with],
+      [t('analysis.keep'), r.analysis.keep_unchanged],
     ].flatMap(([k, v]) => [h('dt', { text: k }), h('dd', { text: v })]),
   );
 
   $('rows').replaceChildren(...[...state.rows.values()].map(rowEl));
   $('ctaSection').hidden = state.ctas.size === 0;
   $('ctas').replaceChildren(...[...state.ctas.values()].map(ctaEl));
-  document.querySelectorAll('.filters button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === 'all')));
+  document.querySelectorAll('.filters button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === state.filter)));
   $('pickAll').checked = false;
   renderStats();
   applyFilter();
@@ -189,12 +197,12 @@ function renderStats() {
   const rows = [...state.rows.values()];
   const count = (s) => rows.filter((v) => v.status === s).length;
   const items = [
-    ['', 'Варіантів', rows.length],
-    ['ok', 'Готові', count('ok')],
-    ['review', 'Перевірити', count('review')],
-    ['duplicate', 'Дублі', count('duplicate')],
-    ['', 'Час', `${Math.round(r.durationMs / 1000)} с`],
-    ['', 'Вартість', r.costUsd === null ? 'н/д' : `$${r.costUsd.toFixed(3)}`],
+    ['', t('stats.variants'), rows.length],
+    ['ok', t('filter.ok'), count('ok')],
+    ['review', t('filter.review'), count('review')],
+    ['duplicate', t('filter.duplicate'), count('duplicate')],
+    ['', t('stats.time'), t('stats.seconds', { n: Math.round(r.durationMs / 1000) })],
+    ['', t('stats.cost'), r.costUsd === null ? t('stats.na') : `$${r.costUsd.toFixed(3)}`],
   ];
   $('stats').replaceChildren(...items.map(([cls, k, v]) => h('div', { class: cls }, h('dt', { text: k }), h('dd', { text: String(v) }))));
 }
@@ -205,25 +213,40 @@ function setSeam(text) {
     p.textContent = text;
     p.classList.remove('placeholder');
   } else {
-    p.textContent = 'Наведіть на рядок, щоб прочитати хук разом із тілом ролика';
+    p.textContent = t('seam.placeholder');
     p.classList.add('placeholder');
   }
 }
 
+// Angle and rule labels come from the server in Ukrainian; other languages override them by id when a translation exists.
 function angleLabel(id) {
-  return state.meta.angles.find((a) => a.id === id)?.label ?? id;
+  const server = state.meta.angles.find((a) => a.id === id)?.label ?? id;
+  return getLang() === 'uk' || !has(`angle.${id}`) ? server : t(`angle.${id}`);
+}
+
+function flagText(f) {
+  const ownLang = getLang() === 'uk';
+  const label = ownLang || !has(`rule.${f.ruleId}.label`) ? f.label : t(`rule.${f.ruleId}.label`);
+  let { match, hint } = f;
+  if (f.ruleId === 'length' && f.limit) {
+    match = t('check.lengthMatch', { actual: f.limit.actual, max: f.limit.max, unit: t(`unit.${f.limit.unit}`) });
+    if (!ownLang) hint = t(`rule.length.hint.${f.limit.unit}`);
+  } else if (!ownLang && has(`rule.${f.ruleId}.hint`)) {
+    hint = t(`rule.${f.ruleId}.hint`);
+  }
+  return { label, match, hint };
 }
 
 const FIELD_LABEL = {
-  hookVisual: 'Перший кадр',
-  firstLine: 'Перша фраза',
-  onScreenText: 'Текст на екрані',
-  spoken: 'Озвучка CTA',
-  ctaOnScreen: 'Текст CTA на екрані',
+  hookVisual: 'col.visual',
+  firstLine: 'col.line',
+  onScreenText: 'col.screen',
+  spoken: 'field.spoken',
+  ctaOnScreen: 'field.ctaOnScreen',
 };
 
 function editable(field, value, cls) {
-  const el = h('span', { class: `copy ${cls}`, spellcheck: true, 'data-field': field, text: value, role: 'textbox', 'aria-label': FIELD_LABEL[field] });
+  const el = h('span', { class: `copy ${cls}`, spellcheck: true, 'data-field': field, text: value, role: 'textbox', 'aria-label': t(FIELD_LABEL[field]) });
   try {
     el.contentEditable = 'plaintext-only'; // no rich-text paste
   } catch {
@@ -234,10 +257,10 @@ function editable(field, value, cls) {
 
 function counterText(field, value) {
   const L = state.meta.limits;
-  if (field === 'firstLine') return [countWords(value), L.firstLineMaxWords, 'слів'];
-  if (field === 'onScreenText') return [countChars(value), L.onScreenMaxChars, 'символів'];
-  if (field === 'spoken') return [countWords(value), L.ctaSpokenMaxWords, 'слів'];
-  if (field === 'ctaOnScreen') return [countChars(value), L.ctaOnScreenMaxChars, 'символів'];
+  if (field === 'firstLine') return [countWords(value), L.firstLineMaxWords, t('unit.words')];
+  if (field === 'onScreenText') return [countChars(value), L.onScreenMaxChars, t('unit.chars')];
+  if (field === 'spoken') return [countWords(value), L.ctaSpokenMaxWords, t('unit.words')];
+  if (field === 'ctaOnScreen') return [countChars(value), L.ctaOnScreenMaxChars, t('unit.chars')];
   return null;
 }
 
@@ -248,7 +271,7 @@ function counterEl(field, value) {
 
 function rowEl(v) {
   return h('tr', { 'data-id': v.id, 'data-status': v.status },
-    h('td', { class: 'col-pick' }, h('input', { type: 'checkbox', checked: v.selected, 'aria-label': `Обрати ${v.id}` })),
+    h('td', { class: 'col-pick' }, h('input', { type: 'checkbox', checked: v.selected, 'aria-label': t('table.pick', { id: v.id }) })),
     h('td', { class: 'col-angle' }, h('span', { class: 'status-dot' }), h('span', { class: 'angle', text: angleLabel(v.angle) })),
     h('td', { class: 'col-visual' }, editable('hookVisual', v.hookVisual, 'visual')),
     h('td', { class: 'col-line' },
@@ -263,27 +286,29 @@ function rowEl(v) {
 function checksEl(item) {
   const items = [];
   const sim = item.similar;
-  const t = state.meta.similarity;
-  if (sim && sim.score >= t.duplicate) {
-    items.push(h('li', { class: 'flag dup', text: `Повторює ${SOURCE_LABEL[sim.source]}: «${sim.text}» (схожість ${sim.score.toFixed(2)})` }));
-  } else if (sim && sim.score >= t.similar) {
-    items.push(h('li', { class: 'flag medium', text: `Схожий на ${SOURCE_LABEL[sim.source]}: «${sim.text}» (схожість ${sim.score.toFixed(2)})` }));
+  const th = state.meta.similarity;
+  const simParams = sim && { source: t(`source.${sim.source}`), text: sim.text, score: sim.score.toFixed(2) };
+  if (sim && sim.score >= th.duplicate) {
+    items.push(h('li', { class: 'flag dup', text: t('check.duplicate', simParams) }));
+  } else if (sim && sim.score >= th.similar) {
+    items.push(h('li', { class: 'flag medium', text: t('check.similar', simParams) }));
   }
   // The same rule can fire on the spoken line and the on-screen text; show it once.
   const seen = new Set();
   for (const f of item.flags) {
-    const text = `${f.label}: ${f.match}`;
+    const { label, match, hint } = flagText(f);
+    const text = `${label}: ${match}`;
     if (seen.has(text)) continue;
     seen.add(text);
-    items.push(h('li', { class: `flag ${f.severity}`, title: f.hint, text }));
+    items.push(h('li', { class: `flag ${f.severity}`, title: hint, text }));
   }
-  if (!items.length) return h('span', { class: 'clean', text: 'Без зауважень' });
+  if (!items.length) return h('span', { class: 'clean', text: t('check.clean') });
   return h('ul', { class: 'flags' }, items);
 }
 
 function ctaEl(c) {
   return h('li', { 'data-cta': c.id, 'data-status': c.status },
-    h('input', { type: 'checkbox', checked: c.selected, 'aria-label': `Обрати ${c.id}` }),
+    h('input', { type: 'checkbox', checked: c.selected, 'aria-label': t('table.pick', { id: c.id }) }),
     h('div', {}, editable('spoken', c.spoken, 'line'), counterEl('spoken', c.spoken)),
     h('div', {}, editable('ctaOnScreen', c.onScreenText, 'screen'), counterEl('ctaOnScreen', c.onScreenText)),
     h('div', { class: 'cta-check' }, checksEl(c)),
@@ -338,12 +363,15 @@ function wireEditing(container, getItem, recheck) {
 wireEditing(rowsEl, (el) => {
   const host = el.closest('tr');
   return { item: state.rows.get(host.dataset.id), host };
-}, async (item, host) => {
+}, async (item) => {
   if (snapshot(item) === item.checked) return;
   item.checked = snapshot(item);
   try {
     const res = await api('/api/check', { originalHook: state.result.analysis.original_hook, variants: [pickCopy(item)] }).then((r) => r.json());
     Object.assign(item, res.variants[0]);
+    // Look the row up again: a language switch may have re-rendered the table while the request was in flight.
+    const host = rowsEl.querySelector(`tr[data-id="${CSS.escape(item.id)}"]`);
+    if (!host) return;
     host.dataset.status = item.status;
     host.querySelector('.col-check').replaceChildren(checksEl(item));
     renderStats();
@@ -356,12 +384,14 @@ wireEditing(rowsEl, (el) => {
 wireEditing($('ctas'), (el) => {
   const host = el.closest('li');
   return { item: state.ctas.get(host.dataset.cta), host };
-}, async (item, host) => {
+}, async (item) => {
   if (snapshotCta(item) === item.checked) return;
   item.checked = snapshotCta(item);
   try {
     const res = await api('/api/check', { ctas: [{ id: item.id, spoken: item.spoken, onScreenText: item.onScreenText }] }).then((r) => r.json());
     Object.assign(item, res.ctas[0]);
+    const host = $('ctas').querySelector(`li[data-cta="${CSS.escape(item.id)}"]`);
+    if (!host) return;
     host.dataset.status = item.status;
     host.querySelector('.cta-check').replaceChildren(checksEl(item));
   } catch (err) {
@@ -411,8 +441,8 @@ function updateSelection() {
   const { variants, ctas } = selected();
   const parts = [];
   if (variants.length) parts.push(hooksWord(variants.length));
-  if (ctas.length) parts.push(`${ctas.length} CTA`);
-  $('selection').textContent = parts.length ? `Обрано ${parts.join(' і ')}` : 'Нічого не обрано';
+  if (ctas.length) parts.push(t('selection.ctas', { n: ctas.length }));
+  $('selection').textContent = parts.length ? t('selection.some', { items: parts.join(t('selection.and')) }) : t('selection.none');
   $('exportCsv').disabled = $('exportMd').disabled = !(variants.length || ctas.length);
   $('saveLibrary').disabled = !variants.length;
 }
@@ -444,7 +474,7 @@ async function exportAs(format) {
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
-    toast(format === 'csv' ? `Збережено ${name}` : `Бриф збережено: ${name}`);
+    toast(t(format === 'csv' ? 'toast.savedCsv' : 'toast.savedBrief', { name }));
   } catch (err) {
     toast(err.message);
   }
@@ -459,10 +489,36 @@ $('saveLibrary').addEventListener('click', async () => {
     const res = await api('/api/library', { runId: state.result.runId, scriptTitle: state.result.scriptTitle, variants: variants.map(pickCopy) }).then((r) => r.json());
     state.meta.librarySize = res.librarySize;
     renderRuntime();
-    toast(`Додано ${hooksWord(res.added)} у бібліотеку. Наступна генерація позначить повтори.`);
+    toast(t('toast.addedLibrary', { hooks: hooksWord(res.added) }));
   } catch (err) {
     toast(err.message);
   }
 });
 
+/* ---------- language ---------- */
+
+function renderLangSwitch() {
+  for (const b of $('langSwitch').querySelectorAll('button[data-lang]')) b.setAttribute('aria-pressed', String(b.dataset.lang === getLang()));
+}
+
+/** Re-renders everything that carries UI text. Copy, edits, ticks, selection and the filter are kept. */
+function renderLanguage() {
+  applyStatic();
+  renderLangSwitch();
+  renderRuntime();
+  if (state.meta) {
+    renderBanner();
+    renderAngles(state.meta);
+  }
+  if (state.result) renderResults();
+}
+
+$('langSwitch').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-lang]');
+  if (!btn || btn.dataset.lang === getLang()) return;
+  setLang(btn.dataset.lang);
+  renderLanguage();
+});
+
+renderLanguage();
 init();

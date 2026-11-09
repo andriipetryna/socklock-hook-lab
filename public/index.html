@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="uk">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -17,9 +17,15 @@
         <path d="M6 4h6v5H6zM20 4h6v5h-6z" fill="var(--tip)"/>
       </svg>
       <h1>Hook Lab</h1>
-      <span class="brand-sub">модифікації переможців SockLock</span>
+      <span class="brand-sub" data-i18n="brand.sub">variations on SockLock winners</span>
     </div>
-    <p class="runtime" id="runtime">Підключаюся…</p>
+    <div class="topbar-end">
+      <p class="runtime" id="runtime" data-i18n="runtime.connecting">Connecting…</p>
+      <div class="lang-switch" id="langSwitch" role="group" aria-label="Interface language" data-i18n-attr="aria-label:lang.aria">
+        <button type="button" data-lang="en" lang="en" aria-pressed="true" title="English">EN</button>
+        <button type="button" data-lang="uk" lang="uk" aria-pressed="false" title="Українська">UA</button>
+      </div>
+    </div>
   </header>
 
   <div class="banner" id="banner" hidden></div>
@@ -28,68 +34,68 @@
     <form class="input-pane" id="form" autocomplete="off">
       <div class="field">
         <div class="field-head">
-          <label for="script">Скрипт переможця</label>
-          <select id="examples" aria-label="Підставити приклад">
-            <option value="">Приклад…</option>
+          <label for="script" data-i18n="form.script">Winning script</label>
+          <select id="examples" aria-label="Insert an example" data-i18n-attr="aria-label:form.examples">
+            <option value="" data-i18n="form.examplePlaceholder">Example…</option>
           </select>
         </div>
-        <textarea id="script" rows="16" spellcheck="false" placeholder="Вставте скрипт: хук, озвучку, текст на екрані, сцени, CTA. Формат довільний."></textarea>
+        <textarea id="script" rows="16" spellcheck="false" data-i18n-attr="placeholder:form.scriptPlaceholder" placeholder="Paste the script: hook, voiceover, on-screen text, scenes, CTA. Any format."></textarea>
       </div>
 
       <fieldset class="field">
-        <legend>Кути</legend>
+        <legend data-i18n="form.angles">Angles</legend>
         <div class="chips" id="angles"></div>
       </fieldset>
 
       <div class="field-row">
         <div class="field">
-          <label for="count">Хуків</label>
+          <label for="count" data-i18n="form.count">Hooks</label>
           <input id="count" type="number" min="1" max="40" value="20">
         </div>
         <div class="field">
-          <label for="ctaCount">CTA</label>
+          <label for="ctaCount" data-i18n="form.ctaCount">CTAs</label>
           <input id="ctaCount" type="number" min="0" max="10" value="4">
         </div>
       </div>
 
-      <button class="primary" id="generate" type="submit">Згенерувати варіанти</button>
+      <button class="primary" id="generate" type="submit" data-i18n="form.generate">Generate variants</button>
       <p class="hint" id="progress" aria-live="polite"></p>
     </form>
 
-    <section class="results-pane" aria-label="Результати">
+    <section class="results-pane" aria-label="Results" data-i18n-attr="aria-label:results.aria">
       <div class="empty" id="empty">
-        <h2>Нові перші три секунди для ролика, який уже працює</h2>
-        <p>Вставте скрипт переможця ліворуч. Інструмент запропонує хуки під різні кути, перевірить їх на ризикові твердження й повтори з бібліотеки, а ви оберете, поправите і віддасте бриф у продакшн.</p>
+        <h2 data-i18n="empty.title">New first three seconds for an ad that already works</h2>
+        <p data-i18n="empty.body">Paste a winning script on the left. The tool suggests hooks across different angles, checks them for risky claims and repeats from the library, and you pick, tweak and hand the brief to production.</p>
       </div>
 
       <div id="results" hidden>
-        <div class="seam" id="seam" aria-label="Як новий хук переходить у тіло ролика">
+        <div class="seam" id="seam" aria-label="How the new hook flows into the body of the ad" data-i18n-attr="aria-label:seam.aria">
           <div class="seam-new">
-            <span class="seam-label">Новий початок, 0–3 с</span>
-            <p id="seamNew">Наведіть на рядок, щоб прочитати його разом із тілом ролика</p>
+            <span class="seam-label" data-i18n="seam.new">New opening, 0–3 s</span>
+            <p id="seamNew" class="placeholder">Hover a row to read the hook together with the body of the ad</p>
           </div>
           <svg class="seam-magnet" viewBox="0 0 32 32" aria-hidden="true">
             <path d="M4 6v6h12a4 4 0 0 1 0 8H4v6h12a10 10 0 0 0 0-20z" fill="var(--magnet)"/>
             <path d="M4 6h5v6H4zM4 20h5v6H4z" fill="var(--tip)"/>
           </svg>
           <div class="seam-body">
-            <span class="seam-label">Тіло без змін</span>
+            <span class="seam-label" data-i18n="seam.body">Body, unchanged</span>
             <p id="seamBody"></p>
           </div>
         </div>
 
         <details class="analysis">
-          <summary>Як модель прочитала переможця</summary>
+          <summary data-i18n="analysis.summary">How the model read the winner</summary>
           <dl id="analysis"></dl>
         </details>
 
         <div class="toolbar">
           <dl class="stats" id="stats"></dl>
-          <div class="filters" role="group" aria-label="Фільтр">
-            <button type="button" data-filter="all" aria-pressed="true">Усі</button>
-            <button type="button" data-filter="ok" aria-pressed="false">Готові</button>
-            <button type="button" data-filter="review" aria-pressed="false">Перевірити</button>
-            <button type="button" data-filter="duplicate" aria-pressed="false">Дублі</button>
+          <div class="filters" role="group" aria-label="Filter" data-i18n-attr="aria-label:filters.aria">
+            <button type="button" data-filter="all" aria-pressed="true" data-i18n="filter.all">All</button>
+            <button type="button" data-filter="ok" aria-pressed="false" data-i18n="filter.ok">Ready</button>
+            <button type="button" data-filter="review" aria-pressed="false" data-i18n="filter.review">Review</button>
+            <button type="button" data-filter="duplicate" aria-pressed="false" data-i18n="filter.duplicate">Duplicates</button>
           </div>
         </div>
 
@@ -97,12 +103,12 @@
           <table class="variants">
             <thead>
               <tr>
-                <th class="col-pick"><input type="checkbox" id="pickAll" aria-label="Обрати всі видимі"></th>
-                <th class="col-angle">Кут</th>
-                <th class="col-visual">Перший кадр</th>
-                <th class="col-line">Перша фраза</th>
-                <th class="col-screen">Текст на екрані</th>
-                <th class="col-check">Перевірка</th>
+                <th class="col-pick"><input type="checkbox" id="pickAll" aria-label="Select all visible" data-i18n-attr="aria-label:table.pickAll"></th>
+                <th class="col-angle" data-i18n="col.angle">Angle</th>
+                <th class="col-visual" data-i18n="col.visual">First frame</th>
+                <th class="col-line" data-i18n="col.line">First line</th>
+                <th class="col-screen" data-i18n="col.screen">On-screen text</th>
+                <th class="col-check" data-i18n="col.check">Check</th>
               </tr>
             </thead>
             <tbody id="rows"></tbody>
@@ -110,7 +116,7 @@
         </div>
 
         <section class="ctas" id="ctaSection">
-          <h3>Варіанти CTA</h3>
+          <h3 data-i18n="ctas.title">CTA variants</h3>
           <ul id="ctas"></ul>
         </section>
       </div>
@@ -118,11 +124,11 @@
   </main>
 
   <footer class="actionbar" id="actionbar" hidden>
-    <p id="selection">Нічого не обрано</p>
+    <p id="selection" data-i18n="selection.none">Nothing selected</p>
     <div class="actions">
-      <button type="button" id="saveLibrary" disabled>Додати в бібліотеку</button>
-      <button type="button" id="exportMd" disabled>Завантажити бриф</button>
-      <button type="button" class="primary" id="exportCsv" disabled>Експорт CSV</button>
+      <button type="button" id="saveLibrary" disabled data-i18n="actions.saveLibrary">Add to library</button>
+      <button type="button" id="exportMd" disabled data-i18n="actions.exportMd">Download brief</button>
+      <button type="button" class="primary" id="exportCsv" disabled data-i18n="actions.exportCsv">Export CSV</button>
     </div>
   </footer>
 

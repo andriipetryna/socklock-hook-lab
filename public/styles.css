@@ -82,6 +82,12 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .runtime { margin: 0; color: var(--steel); font-size: 13px; }
 .runtime strong { color: var(--ink); font-weight: 500; }
 
+.topbar-end { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.lang-switch { display: flex; border: 1px solid var(--line-strong); border-radius: var(--radius-control); overflow: hidden; }
+.lang-switch button { border: 0; border-radius: 0; padding: 4px 10px; font-size: 13px; font-weight: 500; letter-spacing: 0.04em; }
+.lang-switch button + button { border-left: 1px solid var(--line-strong); }
+.lang-switch button[aria-pressed='true'] { background: var(--ink); color: var(--surface); }
+
 .banner {
   margin: 0 28px 16px;
   padding: 12px 16px;

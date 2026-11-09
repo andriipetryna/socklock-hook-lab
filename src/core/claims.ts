@@ -55,6 +55,7 @@ function lengthFlag(field: CopyField, actual: number, max: number, unit: 'words'
     field,
     match: `${actual} ${unit === 'words' ? 'слів' : 'символів'} (макс. ${max})`,
     hint: unit === 'words' ? 'Має вміститися в перші 3 секунди.' : 'Має читатися за одну секунду.',
+    limit: { actual, max, unit },
   };
 }
 
