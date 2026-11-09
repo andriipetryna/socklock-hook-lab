@@ -50,6 +50,30 @@
   }
 }
 
+/* Explicit choice from the theme switch; keep in sync with the block above. */
+:root[data-theme='dark'] {
+  --enamel: #0f1626;
+  --surface: #172036;
+  --ink: #e6ebf2;
+  --steel: #9aa7b8;
+  --line: #2a3550;
+  --line-strong: #3a4766;
+  --magnet: #f0564a;
+  --tip: #8d99a8;
+  --ok: #6fd3a0;
+  --ok-bg: #173527;
+  --review: #f0b85a;
+  --review-bg: #3a2c12;
+  --high: #ff8a80;
+  --high-bg: #3d1c1c;
+  --dup: #7f8a9b;
+  --row-hover: #1c2742;
+  --focus: #8fb0ff;
+  --body-block: #2b3a5c;
+  --body-block-ink: #eef2f8;
+  color-scheme: dark;
+}
+
 * { box-sizing: border-box; }
 
 body {
@@ -83,10 +107,12 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .runtime strong { color: var(--ink); font-weight: 500; }
 
 .topbar-end { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-.lang-switch { display: flex; border: 1px solid var(--line-strong); border-radius: var(--radius-control); overflow: hidden; }
-.lang-switch button { border: 0; border-radius: 0; padding: 4px 10px; font-size: 13px; font-weight: 500; letter-spacing: 0.04em; }
-.lang-switch button + button { border-left: 1px solid var(--line-strong); }
-.lang-switch button[aria-pressed='true'] { background: var(--ink); color: var(--surface); }
+.lang-switch, .theme-switch { display: flex; border: 1px solid var(--line-strong); border-radius: var(--radius-control); overflow: hidden; }
+.lang-switch button, .theme-switch button { border: 0; border-radius: 0; padding: 4px 10px; font-size: 13px; font-weight: 500; letter-spacing: 0.04em; }
+.lang-switch button + button, .theme-switch button + button { border-left: 1px solid var(--line-strong); }
+.lang-switch button[aria-pressed='true'], .theme-switch button[aria-pressed='true'] { background: var(--ink); color: var(--surface); }
+.theme-switch button { display: grid; place-items: center; padding: 4px 8px; }
+.theme-switch svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
 .banner {
   margin: 0 28px 16px;

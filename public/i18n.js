@@ -9,6 +9,9 @@ const dict = {
   uk: {
     'doc.title': 'SockLock Hook Lab',
     'lang.aria': 'Мова інтерфейсу',
+    'theme.aria': 'Тема оформлення',
+    'theme.light': 'Світла тема',
+    'theme.dark': 'Темна тема',
     'brand.sub': 'модифікації переможців SockLock',
     'runtime.connecting': 'Підключаюся…',
     'runtime.info': 'Провайдер {provider}, модель {model}. У бібліотеці {library}.',
@@ -92,6 +95,9 @@ const dict = {
   en: {
     'doc.title': 'SockLock Hook Lab',
     'lang.aria': 'Interface language',
+    'theme.aria': 'Color theme',
+    'theme.light': 'Light theme',
+    'theme.dark': 'Dark theme',
     'brand.sub': 'variations on SockLock winners',
     'runtime.connecting': 'Connecting…',
     'runtime.info': 'Provider {provider}, model {model}. Library: {library}.',

@@ -520,5 +520,41 @@ $('langSwitch').addEventListener('click', (e) => {
   renderLanguage();
 });
 
+/* ---------- theme ---------- */
+
+// No stored choice means "follow the OS"; picking a button pins it. The <head> script applies the stored value before paint.
+const THEME_KEY = 'hooklab.theme';
+const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
+
+function readTheme() {
+  try {
+    const v = localStorage.getItem(THEME_KEY);
+    return v === 'light' || v === 'dark' ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+const effectiveTheme = () => readTheme() ?? (systemDark.matches ? 'dark' : 'light');
+
+function renderThemeSwitch() {
+  const current = effectiveTheme();
+  for (const b of $('themeSwitch').querySelectorAll('button[data-theme-choice]')) b.setAttribute('aria-pressed', String(b.dataset.themeChoice === current));
+}
+
+$('themeSwitch').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-theme-choice]');
+  if (!btn) return;
+  const next = btn.dataset.themeChoice;
+  document.documentElement.dataset.theme = next;
+  try {
+    localStorage.setItem(THEME_KEY, next);
+  } catch {}
+  renderThemeSwitch();
+});
+
+systemDark.addEventListener('change', renderThemeSwitch);
+
+renderThemeSwitch();
 renderLanguage();
 init();
